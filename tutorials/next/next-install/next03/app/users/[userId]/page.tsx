@@ -5,6 +5,7 @@ import { Suspense } from "react";
 //using suspense is important so that one important element can still be displayed while waiting for the next one to load
 import UserPosts from "./components/UserPosts";
 import { Metadata } from "next";
+import getAllUsers from "@/lib/getAllUsers";
 
 type Params = {
   params: {
@@ -17,13 +18,13 @@ export async function generateMetadata({
 }: Params): Promise<Metadata> {
   //the getUser function to request data in generateMetadata
   //and UserPage will not become two request
-  //next js will de duplicate the two requests to one 
-  const userData: Promise<User> = getUser(userId)
-  const user: User = await userData
+  //next js will de duplicate the two requests to one
+  const userData: Promise<User> = getUser(userId);
+  const user: User = await userData;
   return {
     title: user.name,
-    description: `This is the page of ${user.name}`
-  }
+    description: `This is the page of ${user.name}`,
+  };
 }
 
 export default async function UserPage({ params: { userId } }: Params) {
@@ -50,5 +51,19 @@ export default async function UserPage({ params: { userId } }: Params) {
         <UserPosts promise={userPostsData} />
       </Suspense>
     </>
+  );
+}
+
+//v function generates static parameters
+//telling next js what possible params the userId route will be
+//no default here
+export async function generateStaticParams() {
+  const usersData: Promise<User[]> = getAllUsers();
+  const users = await usersData;
+  // providing params in advance for SSG
+  // next will know the possible params and generate pages in advance
+  return users.map(user =>
+    //params always need to be string to provide url in advance for  but user.id is a number
+    ({ userId: user.id.toString() })
   );
 }
